@@ -15,7 +15,33 @@ public:
     // enter code here that interprets the mouse's
     // x, y position as H ans S (I suggest to set
     // V to 1.0) and converts that tripple to RGB
-    return Vec3{x,y,1.0f};
+    const float h = x * 360.0f;
+    const float s = y;
+    const float v = 1.0f;
+    const float c = v * s;
+
+    const float h_prime = h / 60.0f;
+    const float a = c * (1 - std::abs((std::fmod(h_prime, 2.0f)) - 1));
+
+    Vec3 rgb_out;
+    if (h_prime < 1) {
+        rgb_out = Vec3{c, a, 0.0f};
+    } else if (h_prime < 2) {
+        rgb_out = Vec3{a, c, 0.0f};
+    } else if (h_prime < 3) {
+        rgb_out = Vec3{0.0f, c, a};
+    } else if (h_prime < 4) {
+        rgb_out = Vec3{0.0f, a, c};
+    } else if (h_prime < 5) {
+        rgb_out = Vec3{a, 0.0f, c};
+    } else if (h_prime < 6) {
+        rgb_out = Vec3{c, 0.0f, a};
+    } else {
+        rgb_out = Vec3{0.0f, 0.0f, 0.0f};
+    }
+
+    const Vec3 m_vec = Vec3{v-c, v-c, v-c};
+    return rgb_out + m_vec;
   }
   
   virtual void init() override {
