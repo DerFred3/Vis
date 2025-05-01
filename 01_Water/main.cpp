@@ -33,7 +33,7 @@ public:
         const float past   = last->getValue(x,y);
 
         // TODO: add computation of explicit shallow water equation here
-        const float v = 0;        
+        const float v = alpha * (right + left + top + bottom) + (2 - 4 * alpha) * center - past;
         
         next->setValue(x,y,v);
         image.setValue(uint32_t(x),uint32_t(y),0, v > 0 ? uint8_t(v*500) : 0);
