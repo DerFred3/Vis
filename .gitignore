@@ -15,3 +15,6 @@
 **/Solution
 xcuserdata
 LatexUtils
+
+*/.vscode
+*/*.zip
