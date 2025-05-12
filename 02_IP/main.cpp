@@ -14,7 +14,22 @@ public:
   }
   
   void toGrayscale(bool uniform=false) {
-    // TODO: convert image to grayscale
+    for (uint32_t y = 0; y < image.height; y++) {
+      for (uint32_t x = 0; x < image.width; x++) {
+        uint8_t red = image.getValue(x, y, 0);
+        uint8_t green = image.getValue(x, y, 1);
+        uint8_t blue = image.getValue(x, y, 2);
+        uint8_t outputValue = 0;
+        
+        if (uniform) {
+          outputValue = red * 0.333f + green * 0.333f + blue * 0.333f;
+        } else {
+          outputValue = red * 0.299f + green * 0.587f + blue * 0.114f;
+        }
+
+        image.setValue(x, y, outputValue);
+      }
+    }
   }
 
   void loadImage() {
@@ -56,6 +71,42 @@ public:
   
   void filter(const Grid2D& filter) {
     // TODO: apply filter to image
+    uint32_t filterXMid = filter.getWidth() / 2;
+    uint32_t filterYMid = filter.getHeight() / 2;
+
+    for (uint32_t y = 0; y < image.height; y++) {
+      for (uint32_t x = 0; x < image.width; x++) {
+        uint8_t red = 0;
+        uint8_t green = 0;
+        uint8_t blue = 0;
+        for (uint32_t f_y = 0; f_y < filter.getHeight(); f_y++) {
+          int64_t filterOnImageY = y + (f_y - filterYMid);
+          if (filterOnImageY < 0 || filterOnImageY >= image.height) {
+            continue;
+          }
+
+          for (uint32_t f_x = 0; f_x < filter.getWidth(); f_x++) {
+            int64_t filterOnImageX = x + (f_x - filterXMid);
+            if (filterOnImageX < 0 || filterOnImageX >= image.width) {
+              continue;
+            }
+
+            float filterWeight = filter.getValue(f_x, f_y);
+            int16_t weightedRed = image.getValue(filterOnImageX, filterOnImageY, 0) * filterWeight;
+            int16_t weightedGreen = image.getValue(filterOnImageX, filterOnImageY, 1) * filterWeight;
+            int16_t weightedBlue = image.getValue(filterOnImageX, filterOnImageY, 2) * filterWeight;
+
+            red += weightedRed;
+            green += weightedGreen;
+            blue += weightedBlue;
+          }
+        }
+
+        image.setValue(x, y, 0, red);
+        image.setValue(x, y, 1, green);
+        image.setValue(x, y, 2, blue);
+      }
+    }
   }
   
   virtual void keyboard(int key, int scancode, int action, int mods) override {
