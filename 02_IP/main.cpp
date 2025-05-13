@@ -64,8 +64,15 @@ public:
     
     std::stringstream ss;
 
-    // TODO: convert image to ASCII-Art
-
+    for (int64_t y = image.height - 1; y >= 0; y--) {
+      for (uint32_t x = 0; x < image.width; x++) {
+        uint8_t value = image.getValue(x, y, 0) * 0.299f + image.getValue(x, y, 1) * 0.587f + image.getValue(x, y, 2) * 0.114f;
+        uint8_t valueBasedIndex = ((1 - (float)value / 255.0f)) * lut.length();
+        ss.put(lut[valueBasedIndex]);
+      }
+      ss.put('\n');
+    }
+    ss.put('\n');
     return ss.str();
   }
   
