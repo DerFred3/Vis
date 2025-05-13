@@ -17,4 +17,5 @@ xcuserdata
 LatexUtils
 
 */.vscode
+.vscode
 */*.zip
