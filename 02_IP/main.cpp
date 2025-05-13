@@ -70,41 +70,43 @@ public:
   }
   
   void filter(const Grid2D& filter) {
-    // TODO: apply filter to image
-    uint32_t filterXMid = filter.getWidth() / 2;
-    uint32_t filterYMid = filter.getHeight() / 2;
+    for (uint8_t component = 0; component < 3; component++) {
+      float lowestValue = 255;
+      float highestValue = 0;
+      float values[image.width * image.height] = {0};
+      for (uint32_t y = 0; y < image.height; y++) {
+        for (uint32_t x = 0; x < image.width; x++) {
+          float value = 0;
+          
+          if (x == 0 || y == 0 || x == image.width - 1 || y == image.height - 1) {
+            value = image.getValue(x, y, component);
+          } else {
+            value = image.getValue(x - 1, y - 1, component) * filter.getValue(0, 0) +
+                    image.getValue(x, y - 1, component) * filter.getValue(1, 0) +
+                    image.getValue(x + 1, y - 1, component) * filter.getValue(2, 0) +
+                    image.getValue(x - 1, y, component) * filter.getValue(0, 1) +
+                    image.getValue(x, y, component) * filter.getValue(1, 1) +
+                    image.getValue(x + 1, y, component) * filter.getValue(2, 1) +
+                    image.getValue(x - 1, y + 1, component) * filter.getValue(0, 2) +
+                    image.getValue(x, y + 1, component) * filter.getValue(1, 2) +
+                    image.getValue(x + 1, y + 1, component) * filter.getValue(2, 2);
 
-    for (uint32_t y = 0; y < image.height; y++) {
-      for (uint32_t x = 0; x < image.width; x++) {
-        uint8_t red = 0;
-        uint8_t green = 0;
-        uint8_t blue = 0;
-        for (uint32_t f_y = 0; f_y < filter.getHeight(); f_y++) {
-          int64_t filterOnImageY = y + (f_y - filterYMid);
-          if (filterOnImageY < 0 || filterOnImageY >= image.height) {
-            continue;
+            if (value > highestValue) highestValue = value;
+            else if (value < lowestValue) lowestValue = value;
           }
 
-          for (uint32_t f_x = 0; f_x < filter.getWidth(); f_x++) {
-            int64_t filterOnImageX = x + (f_x - filterXMid);
-            if (filterOnImageX < 0 || filterOnImageX >= image.width) {
-              continue;
-            }
+          values[x + y * image.width] = value;
+        }
+      }
 
-            float filterWeight = filter.getValue(f_x, f_y);
-            int16_t weightedRed = image.getValue(filterOnImageX, filterOnImageY, 0) * filterWeight;
-            int16_t weightedGreen = image.getValue(filterOnImageX, filterOnImageY, 1) * filterWeight;
-            int16_t weightedBlue = image.getValue(filterOnImageX, filterOnImageY, 2) * filterWeight;
-
-            red += weightedRed;
-            green += weightedGreen;
-            blue += weightedBlue;
+      for (uint32_t y = 0; y < image.height; y++) {
+        for (uint32_t x = 0; x < image.width; x++) {
+          if (highestValue > 255 || lowestValue < 0) {
+            image.setNormalizedValue(x, y, component, values[x + y * image.width] / (highestValue - lowestValue));
+          } else {
+            image.setValue(x, y, component, values[x + y * image.width]);
           }
         }
-
-        image.setValue(x, y, 0, red);
-        image.setValue(x, y, 1, green);
-        image.setValue(x, y, 2, blue);
       }
     }
   }
