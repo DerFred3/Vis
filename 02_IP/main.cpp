@@ -81,26 +81,24 @@ public:
       float lowestValue = 255;
       float highestValue = 0;
       float values[image.width * image.height] = {0};
+      uint32_t filterWidthHalf = filter.getWidth() / 2;
+      uint32_t filterHeightHalf = filter.getHeight() / 2;
       for (uint32_t y = 0; y < image.height; y++) {
         for (uint32_t x = 0; x < image.width; x++) {
           float value = 0;
           
-          if (x == 0 || y == 0 || x == image.width - 1 || y == image.height - 1) {
+          if (x <= filterWidthHalf || y <= filterHeightHalf || x + filterWidthHalf > image.width - 1 || y + filterHeightHalf > image.height - 1) {
             value = image.getValue(x, y, component);
           } else {
-            value = image.getValue(x - 1, y - 1, component) * filter.getValue(0, 0) +
-                    image.getValue(x, y - 1, component) * filter.getValue(1, 0) +
-                    image.getValue(x + 1, y - 1, component) * filter.getValue(2, 0) +
-                    image.getValue(x - 1, y, component) * filter.getValue(0, 1) +
-                    image.getValue(x, y, component) * filter.getValue(1, 1) +
-                    image.getValue(x + 1, y, component) * filter.getValue(2, 1) +
-                    image.getValue(x - 1, y + 1, component) * filter.getValue(0, 2) +
-                    image.getValue(x, y + 1, component) * filter.getValue(1, 2) +
-                    image.getValue(x + 1, y + 1, component) * filter.getValue(2, 2);
-
-            if (value > highestValue) highestValue = value;
-            else if (value < lowestValue) lowestValue = value;
+            for (uint32_t f_y = 0; f_y < filter.getHeight(); f_y++) {
+              for (uint32_t f_x = 0; f_x < filter.getWidth(); f_x++) {
+                value += image.getValue(x + (f_x - filterWidthHalf), y + (f_y - filterHeightHalf), component) * filter.getValue(f_x, f_y);
+              }
+            }
           }
+
+          if (value > highestValue) highestValue = value;
+          else if (value < lowestValue) lowestValue = value;
 
           values[x + y * image.width] = value;
         }
@@ -108,11 +106,11 @@ public:
 
       for (uint32_t y = 0; y < image.height; y++) {
         for (uint32_t x = 0; x < image.width; x++) {
-          if (highestValue > 255 || lowestValue < 0) {
-            image.setNormalizedValue(x, y, component, values[x + y * image.width] / (highestValue - lowestValue));
-          } else {
-            image.setValue(x, y, component, values[x + y * image.width]);
+          float value = values[x + y * image.width];
+          if (value < 0) {
+            value *= -1.0f;
           }
+          image.setValue(x, y, component, value);
         }
       }
     }
