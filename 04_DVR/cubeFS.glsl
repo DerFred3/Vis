@@ -42,11 +42,12 @@ void main() {
   result = vec4(0.0);
   do {
     // TODO: Implement raycaster and store the result in "result".
-    //       The next two lines are placeholder code ensuring all
-    //       variables are utilized. This prevents exceptions from
-    //       the initial shader. These placeholder lines should be
-    //       replaced by the raycasting code.
-    result = 1+transferFunction(texture(volume,delta).r);
-    break;
+    vec4 sampled = texture(volume, currentPoint);
+    vec4 current = vec4(transferFunction(sampled.r));
+    result = under(current, result);
+
+    currentPoint += delta;
+
+    if (result.a >= 0.95) break;
   } while (inBounds(currentPoint));
 }
